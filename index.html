@@ -110,6 +110,9 @@
                 price: '',
                 image: '',
             });
+            const [editProductId, setEditProductId] = useState(null);
+            const [editFields, setEditFields] = useState({});
+            const [feedback, setFeedback] = useState('');
 
             const handleInputChange = (e) => {
                 const { name, value } = e.target;
@@ -120,13 +123,53 @@
                 if (newProduct.name && newProduct.price && newProduct.image) {
                     onAddProduct({ ...newProduct, price: parseFloat(newProduct.price) });
                     setNewProduct({ name: '', description: '', price: '', image: '' });
+                    setFeedback('Producto agregado exitosamente.');
+                    setTimeout(() => setFeedback(''), 2000);
                 } else {
-                    alert('Por favor, llena todos los campos para agregar un producto.');
+                    setFeedback('Por favor, llena todos los campos para agregar un producto.');
+                    setTimeout(() => setFeedback(''), 2000);
                 }
             };
 
-            const handleUpdatePrice = (id, newPrice) => {
-                onUpdateProduct(id, { price: parseFloat(newPrice) });
+            const handleEditClick = (product) => {
+                setEditProductId(product.id);
+                setEditFields({ ...product, price: product.price.toString() });
+            };
+
+            const handleEditFieldChange = (e) => {
+                const { name, value } = e.target;
+                setEditFields({ ...editFields, [name]: value });
+            };
+
+            const handleSaveEdit = (id) => {
+                if (!editFields.name || !editFields.price || !editFields.image) {
+                    setFeedback('Por favor, llena todos los campos para editar el producto.');
+                    setTimeout(() => setFeedback(''), 2000);
+                    return;
+                }
+                onUpdateProduct(id, {
+                    name: editFields.name,
+                    description: editFields.description,
+                    price: parseFloat(editFields.price),
+                    image: editFields.image,
+                });
+                setEditProductId(null);
+                setEditFields({});
+                setFeedback('Producto actualizado exitosamente.');
+                setTimeout(() => setFeedback(''), 2000);
+            };
+
+            const handleCancelEdit = () => {
+                setEditProductId(null);
+                setEditFields({});
+            };
+
+            const handleDeleteProduct = (id) => {
+                if (window.confirm('¿Estás seguro de que deseas eliminar este producto?')) {
+                    onDeleteProduct(id);
+                    setFeedback('Producto eliminado exitosamente.');
+                    setTimeout(() => setFeedback(''), 2000);
+                }
             };
 
             return (
@@ -175,6 +218,7 @@
                         >
                             Agregar Producto
                         </button>
+                        {feedback && <div className="mt-4 text-center text-green-600 font-semibold">{feedback}</div>}
                     </div>
 
                     <div className="bg-white rounded-xl shadow-lg p-8">
@@ -185,6 +229,7 @@
                                     <tr className="border-b border-gray-200">
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Imagen</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                                     </tr>
@@ -193,29 +238,95 @@
                                     {products.map((product) => (
                                         <tr key={product.id} className="border-b border-gray-200 last:border-b-0">
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <img src={product.image} alt={product.name} className="w-16 h-16 object-cover rounded-lg" />
+                                                {editProductId === product.id ? (
+                                                    <input
+                                                        type="text"
+                                                        name="image"
+                                                        value={editFields.image}
+                                                        onChange={handleEditFieldChange}
+                                                        className="w-24 px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black transition"
+                                                    />
+                                                ) : (
+                                                    <img src={product.image} alt={product.name} className="w-16 h-16 object-cover rounded-lg" />
+                                                )}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{product.name}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                {editProductId === product.id ? (
+                                                    <input
+                                                        type="text"
+                                                        name="name"
+                                                        value={editFields.name}
+                                                        onChange={handleEditFieldChange}
+                                                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black transition"
+                                                    />
+                                                ) : (
+                                                    product.name
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                                {editProductId === product.id ? (
+                                                    <input
+                                                        type="text"
+                                                        name="description"
+                                                        value={editFields.description}
+                                                        onChange={handleEditFieldChange}
+                                                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black transition"
+                                                    />
+                                                ) : (
+                                                    product.description
+                                                )}
+                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <input
-                                                    type="number"
-                                                    value={product.price}
-                                                    onChange={(e) => handleUpdatePrice(product.id, e.target.value)}
-                                                    className="w-24 px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black transition"
-                                                />
+                                                {editProductId === product.id ? (
+                                                    <input
+                                                        type="number"
+                                                        name="price"
+                                                        value={editFields.price}
+                                                        onChange={handleEditFieldChange}
+                                                        className="w-24 px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black transition"
+                                                    />
+                                                ) : (
+                                                    `$${product.price.toFixed(2)}`
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <button
-                                                    onClick={() => onDeleteProduct(product.id)}
-                                                    className="text-red-600 hover:text-red-900 transition-colors"
-                                                >
-                                                    Eliminar
-                                                </button>
+                                                {editProductId === product.id ? (
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleSaveEdit(product.id)}
+                                                            className="text-green-600 hover:text-green-900 transition-colors mr-2"
+                                                        >
+                                                            Guardar
+                                                        </button>
+                                                        <button
+                                                            onClick={handleCancelEdit}
+                                                            className="text-gray-600 hover:text-gray-900 transition-colors"
+                                                        >
+                                                            Cancelar
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleEditClick(product)}
+                                                            className="text-blue-600 hover:text-blue-900 transition-colors mr-2"
+                                                        >
+                                                            Editar
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteProduct(product.id)}
+                                                            className="text-red-600 hover:text-red-900 transition-colors"
+                                                        >
+                                                            Eliminar
+                                                        </button>
+                                                    </>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
+                            {feedback && <div className="mt-4 text-center text-green-600 font-semibold">{feedback}</div>}
                         </div>
                     </div>
                 </section>
@@ -223,9 +334,16 @@
         }
 
         // /components/ShopHeader.js
-        function ShopHeader({ onNavigate, onSearchChange, cartCount, currentPage }) {
+        function ShopHeader({ onNavigate, onSearchChange, cartCount, currentPage, user, onLogout, onLogin, loginError }) {
             const [showLogin, setShowLogin] = useState(false);
             const [showRegister, setShowRegister] = useState(false);
+            const [loginEmail, setLoginEmail] = useState('');
+            const [loginPassword, setLoginPassword] = useState('');
+
+            const handleLoginSubmit = (e) => {
+                e.preventDefault();
+                onLogin(loginEmail, loginPassword);
+            };
 
             return (
                 <header className="w-full bg-white shadow-sm fixed top-0 left-0 z-50">
@@ -235,10 +353,12 @@
                             <button onClick={() => onNavigate('home')} className="text-gray-600 hover:text-gray-900 transition-colors">Inicio</button>
                             <button onClick={() => onNavigate('products')} className="text-gray-600 hover:text-gray-900 transition-colors">Camisetas</button>
                             <button onClick={() => onNavigate('about')} className="text-gray-600 hover:text-gray-900 transition-colors">Nosotros</button>
-                            <button onClick={() => onNavigate('admin')} className="text-gray-600 hover:text-gray-900 transition-colors">Admin</button>
+                            {user && user.role === 'admin' && (
+                                <button onClick={() => onNavigate('admin')} className="text-gray-600 hover:text-gray-900 transition-colors">Admin</button>
+                            )}
                         </nav>
                         <div className="flex items-center space-x-4">
-                            {currentPage === 'home' ? (
+                            {!user ? (
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => setShowLogin(true)}
@@ -254,17 +374,15 @@
                                     </button>
                                 </div>
                             ) : (
-                                <div className="relative hidden md:block">
-                                    <input
-                                        type="text"
-                                        placeholder="Buscar camisetas..."
-                                        onChange={(e) => onSearchChange(e.target.value)}
-                                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition"
-                                    />
-                                    <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                                    </svg>
-                                </div>
+                                <>
+                                    <span className="text-gray-700 font-medium">{user.email} ({user.role === 'admin' ? 'Administrador' : 'Cliente'})</span>
+                                    <button
+                                        onClick={onLogout}
+                                        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition"
+                                    >
+                                        Cerrar Sesión
+                                    </button>
+                                </>
                             )}
                             <button onClick={() => onNavigate('cart')} className="relative p-2 rounded-full hover:bg-gray-100 transition-colors">
                                 <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -285,10 +403,15 @@
                             <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-sm relative">
                                 <button onClick={() => setShowLogin(false)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
                                 <h2 className="text-2xl font-bold mb-6 text-center">Iniciar Sesión</h2>
-                                <form className="space-y-4">
-                                    <input type="email" placeholder="Correo electrónico" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition" />
-                                    <input type="password" placeholder="Contraseña" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition" />
+                                <form className="space-y-4" onSubmit={handleLoginSubmit}>
+                                    <input type="email" placeholder="Correo electrónico" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} required />
+                                    <input type="password" placeholder="Contraseña" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} required />
+                                    {loginError && <div className="text-red-600 text-sm text-center">{loginError}</div>}
                                     <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-semibold transition">Entrar</button>
+                                    <div className="text-xs text-gray-500 mt-2 text-center">
+                                        <div><b>Admin:</b> admin@admin.com / admin123</div>
+                                        <div><b>Cliente:</b> cliente@cliente.com / cliente123</div>
+                                    </div>
                                 </form>
                             </div>
                         </div>
@@ -402,6 +525,9 @@
             const [searchTerm, setSearchTerm] = useState('');
             const [filteredProducts, setFilteredProducts] = useState(defaultProducts);
             const [paymentMethod, setPaymentMethod] = useState('card'); // 'card' o 'transfer'
+            // --- AUTH STATE ---
+            const [user, setUser] = useState(null); // { role: 'admin' | 'client', email: string }
+            const [loginError, setLoginError] = useState('');
 
             // New: calculate cart count
             const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -489,9 +615,38 @@
                 setCurrentPage('home'); // Redirigir a la página principal
             };
 
+            // --- AUTH LOGIC ---
+            const handleLogin = (email, password) => {
+                // Hardcoded demo credentials
+                if (email === 'admin@admin.com' && password === 'admin123') {
+                    setUser({ role: 'admin', email });
+                    setCurrentPage('home');
+                    setLoginError('');
+                } else if (email === 'cliente@cliente.com' && password === 'cliente123') {
+                    setUser({ role: 'client', email });
+                    setCurrentPage('home');
+                    setLoginError('');
+                } else {
+                    setLoginError('Credenciales incorrectas.');
+                }
+            };
+            const handleLogout = () => {
+                setUser(null);
+                setCurrentPage('home');
+            };
+
             return (
                 <div className="min-h-screen bg-gray-50 font-sans antialiased">
-                    <ShopHeader onNavigate={handleNavigate} onSearchChange={handleSearchChange} cartCount={cartCount} currentPage={currentPage} />
+                    <ShopHeader
+                        onNavigate={handleNavigate}
+                        onSearchChange={handleSearchChange}
+                        cartCount={cartCount}
+                        currentPage={currentPage}
+                        user={user}
+                        onLogout={handleLogout}
+                        onLogin={handleLogin}
+                        loginError={loginError}
+                    />
                     <main className="pt-16"> {/* Padding top para compensar el header fijo */}
                         {currentPage === 'home' && (
                             <ShopHeroSection onExploreClick={() => handleNavigate('products')} />
@@ -635,12 +790,21 @@
                             </section>
                         )}
                         {currentPage === 'admin' && (
-                            <AdminProductManager
-                                products={products}
-                                onUpdateProduct={handleUpdateProduct}
-                                onAddProduct={handleAddProduct}
-                                onDeleteProduct={handleDeleteProduct}
-                            />
+                            user && user.role === 'admin' ? (
+                                <AdminProductManager
+                                    products={products}
+                                    onUpdateProduct={handleUpdateProduct}
+                                    onAddProduct={handleAddProduct}
+                                    onDeleteProduct={handleDeleteProduct}
+                                />
+                            ) : (
+                                <section className="container mx-auto px-4 py-12">
+                                    <div className="bg-white rounded-xl shadow-lg p-8 max-w-md mx-auto text-center">
+                                        <h2 className="text-2xl font-bold text-gray-900 mb-4">Acceso restringido</h2>
+                                        <p className="text-gray-700">Solo los administradores pueden acceder a esta sección.</p>
+                                    </div>
+                                </section>
+                            )
                         )}
                     </main>
                 </div>
