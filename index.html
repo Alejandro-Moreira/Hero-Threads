@@ -110,9 +110,8 @@
                 price: '',
                 image: '',
             });
-            const [editProductId, setEditProductId] = useState(null);
+            const [editId, setEditId] = useState(null);
             const [editFields, setEditFields] = useState({});
-            const [feedback, setFeedback] = useState('');
 
             const handleInputChange = (e) => {
                 const { name, value } = e.target;
@@ -123,52 +122,41 @@
                 if (newProduct.name && newProduct.price && newProduct.image) {
                     onAddProduct({ ...newProduct, price: parseFloat(newProduct.price) });
                     setNewProduct({ name: '', description: '', price: '', image: '' });
-                    setFeedback('Producto agregado exitosamente.');
-                    setTimeout(() => setFeedback(''), 2000);
                 } else {
-                    setFeedback('Por favor, llena todos los campos para agregar un producto.');
-                    setTimeout(() => setFeedback(''), 2000);
+                    alert('Por favor, llena todos los campos para agregar un producto.');
                 }
             };
 
             const handleEditClick = (product) => {
-                setEditProductId(product.id);
-                setEditFields({ ...product, price: product.price.toString() });
+                setEditId(product.id);
+                setEditFields({ ...product });
             };
 
             const handleEditFieldChange = (e) => {
                 const { name, value } = e.target;
-                setEditFields({ ...editFields, [name]: value });
+                setEditFields({ ...editFields, [name]: name === 'price' ? value.replace(/[^0-9.]/g, '') : value });
             };
 
-            const handleSaveEdit = (id) => {
+            const handleSaveEdit = () => {
                 if (!editFields.name || !editFields.price || !editFields.image) {
-                    setFeedback('Por favor, llena todos los campos para editar el producto.');
-                    setTimeout(() => setFeedback(''), 2000);
+                    alert('Por favor, llena todos los campos obligatorios.');
                     return;
                 }
-                onUpdateProduct(id, {
-                    name: editFields.name,
-                    description: editFields.description,
-                    price: parseFloat(editFields.price),
-                    image: editFields.image,
-                });
-                setEditProductId(null);
-                setEditFields({});
-                setFeedback('Producto actualizado exitosamente.');
-                setTimeout(() => setFeedback(''), 2000);
+                if (window.confirm('¿Estás seguro de guardar los cambios de este producto?')) {
+                    onUpdateProduct(editId, { ...editFields, price: parseFloat(editFields.price) });
+                    setEditId(null);
+                    setEditFields({});
+                }
             };
 
             const handleCancelEdit = () => {
-                setEditProductId(null);
+                setEditId(null);
                 setEditFields({});
             };
 
             const handleDeleteProduct = (id) => {
                 if (window.confirm('¿Estás seguro de que deseas eliminar este producto?')) {
                     onDeleteProduct(id);
-                    setFeedback('Producto eliminado exitosamente.');
-                    setTimeout(() => setFeedback(''), 2000);
                 }
             };
 
@@ -218,7 +206,6 @@
                         >
                             Agregar Producto
                         </button>
-                        {feedback && <div className="mt-4 text-center text-green-600 font-semibold">{feedback}</div>}
                     </div>
 
                     <div className="bg-white rounded-xl shadow-lg p-8">
@@ -238,7 +225,7 @@
                                     {products.map((product) => (
                                         <tr key={product.id} className="border-b border-gray-200 last:border-b-0">
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                {editProductId === product.id ? (
+                                                {editId === product.id ? (
                                                     <input
                                                         type="text"
                                                         name="image"
@@ -251,33 +238,33 @@
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                {editProductId === product.id ? (
+                                                {editId === product.id ? (
                                                     <input
                                                         type="text"
                                                         name="name"
                                                         value={editFields.name}
                                                         onChange={handleEditFieldChange}
-                                                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black transition"
+                                                        className="w-32 px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black transition"
                                                     />
                                                 ) : (
                                                     product.name
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                                {editProductId === product.id ? (
+                                                {editId === product.id ? (
                                                     <input
                                                         type="text"
                                                         name="description"
                                                         value={editFields.description}
                                                         onChange={handleEditFieldChange}
-                                                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black transition"
+                                                        className="w-48 px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black transition"
                                                     />
                                                 ) : (
                                                     product.description
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                {editProductId === product.id ? (
+                                                {editId === product.id ? (
                                                     <input
                                                         type="number"
                                                         name="price"
@@ -286,14 +273,14 @@
                                                         className="w-24 px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black transition"
                                                     />
                                                 ) : (
-                                                    `$${product.price.toFixed(2)}`
+                                                    product.price
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                {editProductId === product.id ? (
+                                                {editId === product.id ? (
                                                     <>
                                                         <button
-                                                            onClick={() => handleSaveEdit(product.id)}
+                                                            onClick={handleSaveEdit}
                                                             className="text-green-600 hover:text-green-900 transition-colors mr-2"
                                                         >
                                                             Guardar
@@ -326,7 +313,6 @@
                                     ))}
                                 </tbody>
                             </table>
-                            {feedback && <div className="mt-4 text-center text-green-600 font-semibold">{feedback}</div>}
                         </div>
                     </div>
                 </section>
@@ -351,8 +337,16 @@
                         <h1 className="text-2xl font-bold text-gray-900">Hero Threads</h1>
                         <nav className="hidden md:flex space-x-6">
                             <button onClick={() => onNavigate('home')} className="text-gray-600 hover:text-gray-900 transition-colors">Inicio</button>
-                            <button onClick={() => onNavigate('products')} className="text-gray-600 hover:text-gray-900 transition-colors">Camisetas</button>
-                            <button onClick={() => onNavigate('about')} className="text-gray-600 hover:text-gray-900 transition-colors">Nosotros</button>
+                            {/* Show 'Camisetas' for non-admin, 'Reportes' for admin */}
+                            {user && user.role === 'admin' ? (
+                                <button onClick={() => onNavigate('reports')} className="text-gray-600 hover:text-gray-900 transition-colors">Reportes</button>
+                            ) : (
+                                <button onClick={() => onNavigate('products')} className="text-gray-600 hover:text-gray-900 transition-colors">Camisetas</button>
+                            )}
+                            {/* Hide 'Nosotros' for admin */}
+                            {(!user || user.role !== 'admin') && (
+                                <button onClick={() => onNavigate('about')} className="text-gray-600 hover:text-gray-900 transition-colors">Nosotros</button>
+                            )}
                             {user && user.role === 'admin' && (
                                 <button onClick={() => onNavigate('admin')} className="text-gray-600 hover:text-gray-900 transition-colors">Admin</button>
                             )}
@@ -786,6 +780,17 @@
                                     >
                                         Confirmar Pago
                                     </button>
+                                </div>
+                            </section>
+                        )}
+                        {currentPage === 'reports' && user && user.role === 'admin' && (
+                            <section className="container mx-auto px-4 py-12">
+                                <h2 className="text-4xl font-bold text-center text-gray-900 mb-10">Reportes y Análisis</h2>
+                                <div className="bg-white rounded-xl shadow-lg p-8 max-w-3xl mx-auto">
+                                    <h3 className="text-2xl font-bold mb-4">Información de Ventas</h3>
+                                    <p className="mb-6">(Aquí se mostrarán los datos de ventas, ingresos, productos más vendidos, etc.)</p>
+                                    <h3 className="text-2xl font-bold mb-4">Análisis General de la Plataforma</h3>
+                                    <p>(Aquí se incluirán gráficos y análisis generales del rendimiento de la tienda.)</p>
                                 </div>
                             </section>
                         )}
